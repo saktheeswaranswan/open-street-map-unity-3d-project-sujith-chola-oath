@@ -1,0 +1,81 @@
+let outerPolygon = [];
+let innerPose = [];
+let nOuter = 6; // Number of sides for outer polygon
+let radiusOuter = 300; // Radius of the outer polygon (hexagon)
+let noiseFactor = 10; // Amount of noise for the frail outer boundary
+let dMin = 50; // Minimum distance inside the hexagon
+let dMax = 100; // Maximum distance inside the hexagon
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon with a bumpy, noisy boundary
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the noisy outer polygon
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let noiseOffset = random(-noiseFactor, noiseFactor); // Add noise to the vertices
+    let x = cx + (radiusOuter + noiseOffset) * cos(angle);
+    let y = cy + (radiusOuter + noiseOffset) * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define the inner pose as a set of moving points
+  for (let i = 0; i < 5; i++) {
+    innerPose.push({ x: cx, y: cy, angle: random(360), radius: random(30, 50) });
+  }
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw the noisy outer polygon (hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw and move the inner pose
+  for (let p of innerPose) {
+    movePose(p);  // Move the pose with noisy movement
+    let violation = !isInsideOuterPolygon(p.x, p.y); // Check if the pose is inside the noisy hexagon
+
+    // Change color based on violation
+    if (violation) {
+      fill(255, 0, 0); // Red for violation
+    } else {
+      fill(0, 255, 0); // Green for valid positions
+    }
+
+    // Draw the pose point (could be a circle or another shape)
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+}
+
+// Function to move the pose points with random noisy movement
+function movePose(p) {
+  p.x += random(-2, 2) + noise(frameCount * 0.05) * 4;
+  p.y += random(-2, 2) + noise(frameCount * 0.05) * 4;
+}
+
+// Function to check if the point is inside the noisy outer polygon
+function isInsideOuterPolygon(px, py) {
+  let j = outerPolygon.length - 1;
+  let inside = false;
+  
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let xi = outerPolygon[i].x, yi = outerPolygon[i].y;
+    let xj = outerPolygon[j].x, yj = outerPolygon[j].y;
+
+    let intersect = ((yi > py) != (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+    j = i;
+  }
+
+  return inside;
+}

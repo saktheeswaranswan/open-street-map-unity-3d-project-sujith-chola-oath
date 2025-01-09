@@ -1,0 +1,1693 @@
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance between polygons
+let dMax = 100; // Maximum allowed distance between polygons
+let distanceFromOuter = 30; // Minimum distance from outer polygon boundary to inner polygons
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons with random placement inside the outer polygon
+  let nInner = 20; // Number of inner polygons
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    let violation = random() < 0.5; // Randomly introduce violations (50% chance)
+    
+    // Ensure inner polygon maintains a minimum distance from the outer polygon
+    if (!isValidDistanceFromOuter(p.x, p.y, distanceFromOuter)) {
+      violation = true; // Mark as a violation if the minimum distance is not met
+    }
+
+    innerPolygons.push({ ...p, radius: radiusInner, violation });
+  }
+
+  // Export the coordinates and violations after initialization
+  exportPolygonData();
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons
+  for (let p of innerPolygons) {
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    // Generate random point
+    let x = random(width);
+    let y = random(height);
+    
+    // Check if the point is inside the polygon
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y }; // Store the point if inside
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon using ray-casting algorithm
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+  let ics = 0;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+// Function to check if a point is within a certain distance from the outer polygon
+function isValidDistanceFromOuter(px, py, minDist) {
+  let minDistToEdge = Infinity;
+
+  // Check distance from the point to each edge of the outer polygon
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let j = (i + 1) % outerPolygon.length;
+    let distToEdge = pointLineDistance(px, py, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+    minDistToEdge = min(minDistToEdge, distToEdge);
+  }
+
+  return minDistToEdge >= minDist;
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring inner polygons
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+
+  // Check distance between inner polygons and outer polygon edges
+  for (let p of innerPolygons) {
+    let minDist = Infinity;
+
+    for (let i = 0; i < outerPolygon.length; i++) {
+      let j = (i + 1) % outerPolygon.length;
+      let d = pointLineDistance(p.x, p.y, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+      minDist = min(minDist, d);
+    }
+
+    // Mark valid (green) or violation (red) distances
+    if (minDist >= dMin && minDist <= dMax) {
+      fill(0, 255, 0, 150); // Green
+    } else {
+      fill(255, 0, 0, 150); // Red
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+}
+
+// Export data with coordinates and violation status
+function exportPolygonData() {
+  let polygonData = [];
+
+  for (let p of innerPolygons) {
+    polygonData.push({
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      violation: p.violation
+    });
+  }
+
+  // Print to console
+  console.log("Polygon Data:", polygonData);
+  // You can save this data to a file if needed or use it in further processing
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BETTER ONE 
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance between polygons
+let dMax = 100; // Maximum allowed distance between polygons
+let distanceFromOuter = 30; // Minimum distance from outer polygon boundary to inner polygons
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons with random placement inside the outer polygon
+  let nInner = 20; // Number of inner polygons
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    let violation = random() < 0.5; // Randomly introduce violations (50% chance)
+    
+    // Ensure inner polygon maintains a minimum distance from the outer polygon
+    if (!isValidDistanceFromOuter(p.x, p.y, distanceFromOuter)) {
+      violation = true; // Mark as a violation if the minimum distance is not met
+    }
+
+    innerPolygons.push({ ...p, radius: radiusInner, violation });
+  }
+
+  // Export the coordinates and violations after initialization
+  exportPolygonData();
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons
+  for (let p of innerPolygons) {
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    // Generate random point
+    let x = random(width);
+    let y = random(height);
+    
+    // Check if the point is inside the polygon
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y }; // Store the point if inside
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon using ray-casting algorithm
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+  let ics = 0;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+// Function to check if a point is within a certain distance from the outer polygon
+function isValidDistanceFromOuter(px, py, minDist) {
+  let minDistToEdge = Infinity;
+
+  // Check distance from the point to each edge of the outer polygon
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let j = (i + 1) % outerPolygon.length;
+    let distToEdge = pointLineDistance(px, py, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+    minDistToEdge = min(minDistToEdge, distToEdge);
+  }
+
+  return minDistToEdge >= minDist;
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring inner polygons
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+
+  // Check distance between inner polygons and outer polygon edges
+  for (let p of innerPolygons) {
+    let minDist = Infinity;
+
+    for (let i = 0; i < outerPolygon.length; i++) {
+      let j = (i + 1) % outerPolygon.length;
+      let d = pointLineDistance(p.x, p.y, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+      minDist = min(minDist, d);
+    }
+
+    // Mark valid (green) or violation (red) distances
+    if (minDist >= dMin && minDist <= dMax) {
+      fill(0, 255, 0, 150); // Green
+    } else {
+      fill(255, 0, 0, 150); // Red
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+}
+
+// Export data with coordinates and violation status
+function exportPolygonData() {
+  let polygonData = [];
+
+  for (let p of innerPolygons) {
+    polygonData.push({
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      violation: p.violation
+    });
+  }
+
+  // Print to console
+  console.log("Polygon Data:", polygonData);
+  // You can save this data to a file if needed or use it in further processing
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance between polygons
+let dMax = 100; // Maximum allowed distance between polygons
+let distanceFromOuter = 30; // Minimum distance from outer polygon boundary to inner polygons
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons with random placement inside the outer polygon
+  let nInner = 20; // Number of inner polygons
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    let violation = random() < 0.5; // Randomly introduce violations (50% chance)
+    
+    // Ensure inner polygon maintains a minimum distance from the outer polygon
+    if (!isValidDistanceFromOuter(p.x, p.y, distanceFromOuter)) {
+      violation = true; // Mark as a violation if the minimum distance is not met
+    }
+
+    innerPolygons.push({ ...p, radius: radiusInner, violation });
+  }
+
+  // Export the coordinates and violations after initialization
+  exportPolygonData();
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons
+  for (let p of innerPolygons) {
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    // Generate random point
+    let x = random(width);
+    let y = random(height);
+    
+    // Check if the point is inside the polygon
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y }; // Store the point if inside
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon using ray-casting algorithm
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+  let ics = 0;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+// Function to check if a point is within a certain distance from the outer polygon
+function isValidDistanceFromOuter(px, py, minDist) {
+  let minDistToEdge = Infinity;
+
+  // Check distance from the point to each edge of the outer polygon
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let j = (i + 1) % outerPolygon.length;
+    let distToEdge = pointLineDistance(px, py, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+    minDistToEdge = min(minDistToEdge, distToEdge);
+  }
+
+  return minDistToEdge >= minDist;
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring inner polygons
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+
+  // Check distance between inner polygons and outer polygon edges
+  for (let p of innerPolygons) {
+    let minDist = Infinity;
+
+    for (let i = 0; i < outerPolygon.length; i++) {
+      let j = (i + 1) % outerPolygon.length;
+      let d = pointLineDistance(p.x, p.y, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+      minDist = min(minDist, d);
+    }
+
+    // Mark valid (green) or violation (red) distances
+    if (minDist >= dMin && minDist <= dMax) {
+      fill(0, 255, 0, 150); // Green
+    } else {
+      fill(255, 0, 0, 150); // Red
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+}
+
+// Export data with coordinates and violation status
+function exportPolygonData() {
+  let polygonData = [];
+
+  for (let p of innerPolygons) {
+    polygonData.push({
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      violation: p.violation
+    });
+  }
+
+  // Print to console
+  console.log("Polygon Data:", polygonData);
+  // You can save this data to a file if needed or use it in further processing
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance between polygons
+let dMax = 100; // Maximum allowed distance between polygons
+let distanceFromOuter = 30; // Minimum distance from outer polygon boundary to inner polygons
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons with random placement inside the outer polygon
+  let nInner = 20; // Number of inner polygons
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    let violation = random() < 0.5; // Randomly introduce violations (50% chance)
+    
+    // Ensure inner polygon maintains a minimum distance from the outer polygon
+    if (!isValidDistanceFromOuter(p.x, p.y, distanceFromOuter)) {
+      violation = true; // Mark as a violation if the minimum distance is not met
+    }
+
+    innerPolygons.push({ ...p, radius: radiusInner, violation });
+  }
+
+  // Export the coordinates and violations after initialization
+  exportPolygonData();
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons
+  for (let p of innerPolygons) {
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    // Generate random point
+    let x = random(width);
+    let y = random(height);
+    
+    // Check if the point is inside the polygon
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y }; // Store the point if inside
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon using ray-casting algorithm
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+  let ics = 0;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+// Function to check if a point is within a certain distance from the outer polygon
+function isValidDistanceFromOuter(px, py, minDist) {
+  let minDistToEdge = Infinity;
+
+  // Check distance from the point to each edge of the outer polygon
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let j = (i + 1) % outerPolygon.length;
+    let distToEdge = pointLineDistance(px, py, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+    minDistToEdge = min(minDistToEdge, distToEdge);
+  }
+
+  return minDistToEdge >= minDist;
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring inner polygons
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+
+  // Check distance between inner polygons and outer polygon edges
+  for (let p of innerPolygons) {
+    let minDist = Infinity;
+
+    for (let i = 0; i < outerPolygon.length; i++) {
+      let j = (i + 1) % outerPolygon.length;
+      let d = pointLineDistance(p.x, p.y, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+      minDist = min(minDist, d);
+    }
+
+    // Mark valid (green) or violation (red) distances
+    if (minDist >= dMin && minDist <= dMax) {
+      fill(0, 255, 0, 150); // Green
+    } else {
+      fill(255, 0, 0, 150); // Red
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+}
+
+// Export data with coordinates and violation status
+function exportPolygonData() {
+  let polygonData = [];
+
+  for (let p of innerPolygons) {
+    polygonData.push({
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      violation: p.violation
+    });
+  }
+
+  // Print to console
+  console.log("Polygon Data:", polygonData);
+  // You can save this data to a file if needed or use it in further processing
+}
+
+
+
+
+
+
+
+
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let humanPosePoints = [];
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define and randomize human pose key points
+  humanPosePoints = generateHumanPose(cx, cy);
+
+  // Place random inner polygons inside the outer polygon
+  let nInner = 5;
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    innerPolygons.push({ ...p, radius: radiusInner });
+  }
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon (e.g., a hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons (random circles)
+  for (let p of innerPolygons) {
+    fill(0, 255, 0, 150); // Green for valid polygons
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Draw human pose
+  drawHumanPose(humanPosePoints);
+}
+
+// Function to generate random human pose key points
+function generateHumanPose(x, y) {
+  let points = [];
+
+  // Randomize human pose position
+  let torsoHeight = random(100, 150); // Torso height
+  let headRadius = random(20, 40);    // Head size
+  let armLength = random(80, 120);    // Arm length
+  let legLength = random(100, 140);   // Leg length
+
+  // Head position
+  points.push({ x: x, y: y - torsoHeight - headRadius });
+
+  // Shoulders
+  points.push({ x: x - armLength / 2, y: y - torsoHeight });
+  points.push({ x: x + armLength / 2, y: y - torsoHeight });
+
+  // Elbows
+  points.push({ x: x - armLength, y: y - torsoHeight - 40 });
+  points.push({ x: x + armLength, y: y - torsoHeight - 40 });
+
+  // Hands
+  points.push({ x: x - armLength - 40, y: y - torsoHeight - 80 });
+  points.push({ x: x + armLength + 40, y: y - torsoHeight - 80 });
+
+  // Hips
+  points.push({ x: x - armLength / 4, y: y + torsoHeight });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight });
+
+  // Knees
+  points.push({ x: x - armLength / 4, y: y + torsoHeight + legLength });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight + legLength });
+
+  // Feet
+  points.push({ x: x - armLength / 4 - 20, y: y + torsoHeight + legLength + 40 });
+  points.push({ x: x + armLength / 4 + 20, y: y + torsoHeight + legLength + 40 });
+
+  return points;
+}
+
+// Function to draw the human pose using key points
+function drawHumanPose(points) {
+  fill(255, 200, 200);
+
+  // Draw head
+  ellipse(points[0].x, points[0].y, 40, 40);
+
+  // Draw body parts (lines between key points)
+  line(points[1].x, points[1].y, points[2].x, points[2].y); // Shoulders
+  line(points[2].x, points[2].y, points[3].x, points[3].y); // Elbows
+  line(points[3].x, points[3].y, points[4].x, points[4].y); // Hands
+  line(points[1].x, points[1].y, points[5].x, points[5].y); // Hips
+  line(points[5].x, points[5].y, points[6].x, points[6].y); // Knees
+  line(points[6].x, points[6].y, points[7].x, points[7].y); // Feet
+  line(points[1].x, points[1].y, points[7].x, points[7].y); // Legs connection
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    let x = random(width);
+    let y = random(height);
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y };
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+
+
+
+HUMAN POSE
+
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let humanPosePoints = [];
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define and randomize human pose key points
+  humanPosePoints = generateHumanPose(cx, cy);
+
+  // Place random inner polygons inside the outer polygon
+  let nInner = 5;
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    innerPolygons.push({ ...p, radius: radiusInner });
+  }
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon (e.g., a hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons (random circles)
+  for (let p of innerPolygons) {
+    fill(0, 255, 0, 150); // Green for valid polygons
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Draw human pose
+  drawHumanPose(humanPosePoints);
+}
+
+// Function to generate random human pose key points
+function generateHumanPose(x, y) {
+  let points = [];
+
+  // Randomize human pose position
+  let torsoHeight = random(100, 150); // Torso height
+  let headRadius = random(20, 40);    // Head size
+  let armLength = random(80, 120);    // Arm length
+  let legLength = random(100, 140);   // Leg length
+
+  // Head position
+  points.push({ x: x, y: y - torsoHeight - headRadius });
+
+  // Shoulders
+  points.push({ x: x - armLength / 2, y: y - torsoHeight });
+  points.push({ x: x + armLength / 2, y: y - torsoHeight });
+
+  // Elbows
+  points.push({ x: x - armLength, y: y - torsoHeight - 40 });
+  points.push({ x: x + armLength, y: y - torsoHeight - 40 });
+
+  // Hands
+  points.push({ x: x - armLength - 40, y: y - torsoHeight - 80 });
+  points.push({ x: x + armLength + 40, y: y - torsoHeight - 80 });
+
+  // Hips
+  points.push({ x: x - armLength / 4, y: y + torsoHeight });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight });
+
+  // Knees
+  points.push({ x: x - armLength / 4, y: y + torsoHeight + legLength });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight + legLength });
+
+  // Feet
+  points.push({ x: x - armLength / 4 - 20, y: y + torsoHeight + legLength + 40 });
+  points.push({ x: x + armLength / 4 + 20, y: y + torsoHeight + legLength + 40 });
+
+  return points;
+}
+
+// Function to draw the human pose using key points
+function drawHumanPose(points) {
+  fill(255, 200, 200);
+
+  // Draw head
+  ellipse(points[0].x, points[0].y, 40, 40);
+
+  // Draw body parts (lines between key points)
+  line(points[1].x, points[1].y, points[2].x, points[2].y); // Shoulders
+  line(points[2].x, points[2].y, points[3].x, points[3].y); // Elbows
+  line(points[3].x, points[3].y, points[4].x, points[4].y); // Hands
+  line(points[1].x, points[1].y, points[5].x, points[5].y); // Hips
+  line(points[5].x, points[5].y, points[6].x, points[6].y); // Knees
+  line(points[6].x, points[6].y, points[7].x, points[7].y); // Feet
+  line(points[1].x, points[1].y, points[7].x, points[7].y); // Legs connection
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    let x = random(width);
+    let y = random(height);
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y };
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let humanPosePoints = [];
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define and randomize human pose key points
+  humanPosePoints = generateHumanPose(cx, cy);
+
+  // Place random inner polygons inside the outer polygon
+  let nInner = 5;
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    innerPolygons.push({ ...p, radius: radiusInner });
+  }
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon (e.g., a hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons (random circles)
+  for (let p of innerPolygons) {
+    fill(0, 255, 0, 150); // Green for valid polygons
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Draw human pose
+  drawHumanPose(humanPosePoints);
+}
+
+// Function to generate random human pose key points
+function generateHumanPose(x, y) {
+  let points = [];
+
+  // Randomize human pose position
+  let torsoHeight = random(100, 150); // Torso height
+  let headRadius = random(20, 40);    // Head size
+  let armLength = random(80, 120);    // Arm length
+  let legLength = random(100, 140);   // Leg length
+
+  // Head position
+  points.push({ x: x, y: y - torsoHeight - headRadius });
+
+  // Shoulders
+  points.push({ x: x - armLength / 2, y: y - torsoHeight });
+  points.push({ x: x + armLength / 2, y: y - torsoHeight });
+
+  // Elbows
+  points.push({ x: x - armLength, y: y - torsoHeight - 40 });
+  points.push({ x: x + armLength, y: y - torsoHeight - 40 });
+
+  // Hands
+  points.push({ x: x - armLength - 40, y: y - torsoHeight - 80 });
+  points.push({ x: x + armLength + 40, y: y - torsoHeight - 80 });
+
+  // Hips
+  points.push({ x: x - armLength / 4, y: y + torsoHeight });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight });
+
+  // Knees
+  points.push({ x: x - armLength / 4, y: y + torsoHeight + legLength });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight + legLength });
+
+  // Feet
+  points.push({ x: x - armLength / 4 - 20, y: y + torsoHeight + legLength + 40 });
+  points.push({ x: x + armLength / 4 + 20, y: y + torsoHeight + legLength + 40 });
+
+  return points;
+}
+
+// Function to draw the human pose using key points
+function drawHumanPose(points) {
+  fill(255, 200, 200);
+
+  // Draw head
+  ellipse(points[0].x, points[0].y, 40, 40);
+
+  // Draw body parts (lines between key points)
+  line(points[1].x, points[1].y, points[2].x, points[2].y); // Shoulders
+  line(points[2].x, points[2].y, points[3].x, points[3].y); // Elbows
+  line(points[3].x, points[3].y, points[4].x, points[4].y); // Hands
+  line(points[1].x, points[1].y, points[5].x, points[5].y); // Hips
+  line(points[5].x, points[5].y, points[6].x, points[6].y); // Knees
+  line(points[6].x, points[6].y, points[7].x, points[7].y); // Feet
+  line(points[1].x, points[1].y, points[7].x, points[7].y); // Legs connection
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    let x = random(width);
+    let y = random(height);
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y };
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let outerPolygon = [];
+let innerPolygons = [];
+let humanPosePoints = [];
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define and randomize human pose key points
+  humanPosePoints = generateHumanPose(cx, cy);
+
+  // Place random inner polygons inside the outer polygon
+  let nInner = 5;
+  for (let i = 0; i < nInner; i++) {
+    let p = generateRandomPointInsidePolygon(outerPolygon);
+    let radiusInner = random(10, 30); // Random radius size
+    innerPolygons.push({ ...p, radius: radiusInner });
+  }
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon (e.g., a hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons (random circles)
+  for (let p of innerPolygons) {
+    fill(0, 255, 0, 150); // Green for valid polygons
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Draw human pose
+  drawHumanPose(humanPosePoints);
+}
+
+// Function to generate random human pose key points
+function generateHumanPose(x, y) {
+  let points = [];
+
+  // Randomize human pose position
+  let torsoHeight = random(100, 150); // Torso height
+  let headRadius = random(20, 40);    // Head size
+  let armLength = random(80, 120);    // Arm length
+  let legLength = random(100, 140);   // Leg length
+
+  // Head position
+  points.push({ x: x, y: y - torsoHeight - headRadius });
+
+  // Shoulders
+  points.push({ x: x - armLength / 2, y: y - torsoHeight });
+  points.push({ x: x + armLength / 2, y: y - torsoHeight });
+
+  // Elbows
+  points.push({ x: x - armLength, y: y - torsoHeight - 40 });
+  points.push({ x: x + armLength, y: y - torsoHeight - 40 });
+
+  // Hands
+  points.push({ x: x - armLength - 40, y: y - torsoHeight - 80 });
+  points.push({ x: x + armLength + 40, y: y - torsoHeight - 80 });
+
+  // Hips
+  points.push({ x: x - armLength / 4, y: y + torsoHeight });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight });
+
+  // Knees
+  points.push({ x: x - armLength / 4, y: y + torsoHeight + legLength });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight + legLength });
+
+  // Feet
+  points.push({ x: x - armLength / 4 - 20, y: y + torsoHeight + legLength + 40 });
+  points.push({ x: x + armLength / 4 + 20, y: y + torsoHeight + legLength + 40 });
+
+  return points;
+}
+
+// Function to draw the human pose using key points
+function drawHumanPose(points) {
+  fill(255, 200, 200);
+
+  // Draw head
+  ellipse(points[0].x, points[0].y, 40, 40);
+
+  // Draw body parts (lines between key points)
+  line(points[1].x, points[1].y, points[2].x, points[2].y); // Shoulders
+  line(points[2].x, points[2].y, points[3].x, points[3].y); // Elbows
+  line(points[3].x, points[3].y, points[4].x, points[4].y); // Hands
+  line(points[1].x, points[1].y, points[5].x, points[5].y); // Hips
+  line(points[5].x, points[5].y, points[6].x, points[6].y); // Knees
+  line(points[6].x, points[6].y, points[7].x, points[7].y); // Feet
+  line(points[1].x, points[1].y, points[7].x, points[7].y); // Legs connection
+}
+
+// Function to generate a random point inside a polygon (outer polygon)
+function generateRandomPointInsidePolygon(polygon) {
+  let pt;
+  let isInside = false;
+  while (!isInside) {
+    let x = random(width);
+    let y = random(height);
+    isInside = isPointInsidePolygon(x, y, polygon);
+    pt = { x, y };
+  }
+  return pt;
+}
+
+// Function to check if a point is inside a polygon
+function isPointInsidePolygon(px, py, polygon) {
+  let inside = false;
+  let n = polygon.length;
+  let xinters;
+  let p1x, p1y, p2x, p2y;
+
+  p1x = polygon[0].x;
+  p1y = polygon[0].y;
+  for (let i = 1; i <= n; i++) {
+    p2x = polygon[i % n].x;
+    p2y = polygon[i % n].y;
+    if (py > min(p1y, p2y)) {
+      if (py <= max(p1y, p2y)) {
+        if (px <= max(p1x, p2x)) {
+          if (p1y != p2y) {
+            xinters = (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+          }
+          if (p1x == p2x || px <= xinters) {
+            inside = !inside;
+          }
+        }
+      }
+    }
+    p1x = p2x;
+    p1y = p2y;
+  }
+  return inside;
+}
+
+
+
+
+
+
+
+let humanPosePoints = [];
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define random human pose key points
+  humanPosePoints = generateHumanPose(width / 2, height / 2);
+}
+
+function draw() {
+  background(240);
+  
+  // Draw human pose (key points connected)
+  drawHumanPose(humanPosePoints);
+}
+
+// Function to generate random human pose key points
+function generateHumanPose(x, y) {
+  let points = [];
+  
+  // Randomize human pose position
+  let torsoHeight = random(100, 150);  // Torso height
+  let headRadius = random(20, 40);     // Head size
+  let armLength = random(80, 120);     // Arm length
+  let legLength = random(100, 140);    // Leg length
+
+  // Head position
+  points.push({ x: x, y: y - torsoHeight - headRadius });
+
+  // Shoulders
+  points.push({ x: x - armLength / 2, y: y - torsoHeight });
+  points.push({ x: x + armLength / 2, y: y - torsoHeight });
+
+  // Elbows
+  points.push({ x: x - armLength, y: y - torsoHeight - 40 });
+  points.push({ x: x + armLength, y: y - torsoHeight - 40 });
+
+  // Hands
+  points.push({ x: x - armLength - 40, y: y - torsoHeight - 80 });
+  points.push({ x: x + armLength + 40, y: y - torsoHeight - 80 });
+
+  // Hips
+  points.push({ x: x - armLength / 4, y: y + torsoHeight });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight });
+
+  // Knees
+  points.push({ x: x - armLength / 4, y: y + torsoHeight + legLength });
+  points.push({ x: x + armLength / 4, y: y + torsoHeight + legLength });
+
+  // Feet
+  points.push({ x: x - armLength / 4 - 20, y: y + torsoHeight + legLength + 40 });
+  points.push({ x: x + armLength / 4 + 20, y: y + torsoHeight + legLength + 40 });
+
+  return points;
+}
+
+// Function to draw the human pose using key points and connecting them
+function drawHumanPose(points) {
+  fill(255, 0, 0);
+  stroke(0);
+
+  // Draw key points as circles
+  for (let pt of points) {
+    ellipse(pt.x, pt.y, 15, 15);  // Equal-sized circle for each key point
+  }
+
+  // Connect the key points with lines
+  // Shoulders
+  line(points[1].x, points[1].y, points[2].x, points[2].y);
+
+  // Elbows
+  line(points[3].x, points[3].y, points[4].x, points[4].y);
+
+  // Hands
+  line(points[5].x, points[5].y, points[6].x, points[7].y);
+
+  // Hips
+  line(points[8].x, points[8].y, points[9].x, points[9].y);
+
+  // Knees
+  line(points[10].x, points[10].y, points[11].x, points[11].y);
+
+  // Feet
+  line(points[12].x, points[12].y, points[13].x, points[13].y);
+  
+  // Connecting body parts: Neck to shoulders, shoulders to elbows, etc.
+  line(points[0].x, points[0].y, points[1].x, points[1].y); // Neck to left shoulder
+  line(points[0].x, points[0].y, points[2].x, points[2].y); // Neck to right shoulder
+  line(points[1].x, points[1].y, points[3].x, points[3].y); // Left shoulder to left elbow
+  line(points[2].x, points[2].y, points[4].x, points[4].y); // Right shoulder to right elbow
+  line(points[3].x, points[3].y, points[5].x, points[5].y); // Left elbow to left hand
+  line(points[4].x, points[4].y, points[6].x, points[6].y); // Right elbow to right hand
+  line(points[8].x, points[8].y, points[10].x, points[10].y); // Left hip to left knee
+  line(points[9].x, points[9].y, points[11].x, points[11].y); // Right hip to right knee
+  line(points[10].x, points[10].y, points[12].x, points[12].y); // Left knee to left foot
+  line(points[11].x, points[11].y, points[13].x, points[13].y); // Right knee to right foot
+}

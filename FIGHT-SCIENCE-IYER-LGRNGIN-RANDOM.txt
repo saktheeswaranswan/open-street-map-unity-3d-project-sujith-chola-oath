@@ -1,0 +1,142 @@
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance
+let dMax = 100; // Maximum allowed distance
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (e.g., a hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons with random placement
+  let nInner = 20; // Number of inner polygons
+  for (let i = 0; i < nInner; i++) {
+    let x = random(50, width - 50); // Random x within canvas
+    let y = random(50, height - 50); // Random y within canvas
+    let radiusInner = random(10, 30); // Random radius size
+    let violation = random() < 0.5; // Randomly introduce violations (50% chance)
+    
+    innerPolygons.push({ x, y, radius: radiusInner, violation });
+  }
+
+  // Export the coordinates and violations after initialization
+  exportPolygonData();
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw inner polygons
+  for (let p of innerPolygons) {
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring inner polygons
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+
+  // Check distance between inner polygons and outer polygon edges
+  for (let p of innerPolygons) {
+    let minDist = Infinity;
+
+    for (let i = 0; i < outerPolygon.length; i++) {
+      let j = (i + 1) % outerPolygon.length;
+      let d = pointLineDistance(p.x, p.y, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+      minDist = min(minDist, d);
+    }
+
+    // Mark valid (green) or violation (red) distances
+    if (minDist >= dMin && minDist <= dMax) {
+      fill(0, 255, 0, 150); // Green
+    } else {
+      fill(255, 0, 0, 150); // Red
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+  }
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+// Export data with coordinates and violation status
+function exportPolygonData() {
+  let polygonData = [];
+
+  for (let p of innerPolygons) {
+    polygonData.push({
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      violation: p.violation
+    });
+  }
+
+  // Print to console
+  console.log("Polygon Data:", polygonData);
+  // You can save this data to a file if needed or use it in further processing
+}
