@@ -1,0 +1,151 @@
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance between polygons
+let dMax = 100; // Maximum allowed distance between polygons
+let distanceFromOuter = 30; // Minimum distance from outer polygon boundary to inner polygons
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons for body parts like head, torso, limbs, etc.
+  let bodyParts = ['Head', 'Torso', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg', 'Left Hand', 'Right Hand', 'Left Foot', 'Right Foot'];
+  let bodyPartPositions = [
+    { bodyPart: 'Head', x: cx, y: cy - 120, radius: 40 }, // Head
+    { bodyPart: 'Torso', x: cx, y: cy, radius: 60 }, // Torso
+    { bodyPart: 'Left Arm', x: cx - 100, y: cy - 40, radius: 30 }, // Left Arm
+    { bodyPart: 'Right Arm', x: cx + 100, y: cy - 40, radius: 30 }, // Right Arm
+    { bodyPart: 'Left Leg', x: cx - 50, y: cy + 100, radius: 35 }, // Left Leg
+    { bodyPart: 'Right Leg', x: cx + 50, y: cy + 100, radius: 35 }, // Right Leg
+    { bodyPart: 'Left Hand', x: cx - 140, y: cy - 70, radius: 20 }, // Left Hand
+    { bodyPart: 'Right Hand', x: cx + 140, y: cy - 70, radius: 20 }, // Right Hand
+    { bodyPart: 'Left Foot', x: cx - 50, y: cy + 200, radius: 20 }, // Left Foot
+    { bodyPart: 'Right Foot', x: cx + 50, y: cy + 200, radius: 20 }, // Right Foot
+  ];
+
+  // Place the body parts inside the hexagon
+  bodyPartPositions.forEach(p => {
+    let violation = !isValidDistanceFromOuter(p.x, p.y, distanceFromOuter);
+    innerPolygons.push({ ...p, violation });
+  });
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Apply random noisy movement to the outer polygon
+  movePolygon(outerPolygon);
+
+  // Draw outer polygon (hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Apply random noisy movement to the inner polygons
+  for (let p of innerPolygons) {
+    movePolygon([p]); // Move each body part polygon with noise
+
+    // Check if the inner polygons are still valid and apply color accordingly
+    p.violation = !isValidDistanceFromOuter(p.x, p.y, distanceFromOuter);
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+
+    // Draw inner polygons
+    ellipse(p.x, p.y, p.radius * 2);
+    textSize(12);
+    fill(0);
+    textAlign(CENTER, CENTER);
+    text(p.bodyPart, p.x, p.y);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+// Function to apply random movement (noisy effect) to the polygons
+function movePolygon(polygons) {
+  for (let i = 0; i < polygons.length; i++) {
+    let p = polygons[i];
+    // Add randomness to the position using noise
+    p.x += random(-2, 2) + noise(frameCount * 0.05) * 4;
+    p.y += random(-2, 2) + noise(frameCount * 0.05) * 4;
+  }
+}
+
+// Function to check if a point is within a certain distance from the outer polygon
+function isValidDistanceFromOuter(px, py, minDist) {
+  let minDistToEdge = Infinity;
+
+  // Check distance from the point to each edge of the outer polygon
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let j = (i + 1) % outerPolygon.length;
+    let distToEdge = pointLineDistance(px, py, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+    minDistToEdge = min(minDistToEdge, distToEdge);
+  }
+
+  return minDistToEdge >= minDist;
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring body parts
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+}

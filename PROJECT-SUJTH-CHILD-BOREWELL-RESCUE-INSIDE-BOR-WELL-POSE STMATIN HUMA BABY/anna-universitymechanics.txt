@@ -1,0 +1,421 @@
+ (a) A car has an initial speed of 25m/s and a constant deceleration of 3m/s2
+. Determine the
+velocity of the car when t=4s. What is the displacement of the car during the 4s time
+interval? How much time is needed to stop the car?
+ (b) A projectile is fired with an initial velocity of 250m/s at a target located at a horizontal
+distance of 4km and vertical distance of 700 m above the gun .Determine the value of
+firing angle to hit the target .Neglect air resistance.
+[7+7]
+7. (a) Two blocks of masses M1 and M2 are connected by a string as shown in Figure.7 below
+Assuming the coefficient of friction between block M1 and the horizontal surface to be µ
+if the system is released from rest, find the velocity of the block A after it has moved a
+distance of 1 m Assume M1=100kg.and M2=150kg and µ =0.20.
+
+Figure.7
+ (b) Derive Work-energy equation.
+[10
+
+
+
+6. a) The weight of a body on earth is 980N. If the acceleration due to gravity on
+earth is 9.80m/s2
+, what will be the weight of the body on
+i) The moon, where gravitational acceleration is 1.6m/s2
+ and
+ii) The sun, where gravitational acceleration is 270 m/s2
+.
+(7M)
+ b) A bullet of mass 80gm and moving with a velocity of 200 m/s is fired into a log
+of wood and it penetrates to a depth of 8cm. If the bullet moving with the same
+velocity were fired into a similar piece of wood 5cm thick, with what velocity
+would it merge? Also find the force of resistance assuming it to be uniform.
+(7M)
+7. a) Derive work energy equation for translation. (5M)
+b) A ball of mass 100gm is moving towards a bat with a velocity of 25m/s as
+shown in the Figure 3. When hit by the bat, the ball attains a velocity of 35m/s.
+If the ball and bat are incontact for a period of 0.02 sec, determine the average
+impulse force exerted by the baton the ball during the impact. 
+
+
+
+A solid cylinder weighing 1200 N is acted upon by a force P horizontally as
+shown in figure below. Determine the maximum value of P for which there will
+be rolling without slipping. If P= 1000 N, determine the acceleration of the mass
+centre and the angular acceleration, given that the coefficient of static friction
+µs = 0.2. And the co-efficient of kinetic friction
+7. a) Find the tension in the string as shown in the figure below.
+b) Derive work energy equation of
+Determine the moment of inertia for the area given below about axis AB.
+From basic principles find the moment of inertia of a solid disc.
+A solid cylinder weighing 1200 N is acted upon by a force P horizontally as
+shown in figure below. Determine the maximum value of P for which there will
+be rolling without slipping. If P= 1000 N, determine the acceleration of the mass
+r acceleration, given that the coefficient of static friction
+efficient of kinetic friction µk = 0.15.
+Find the tension in the string as shown in the figure below.
+Derive work energy equation of translation
+
+
+
+6. a) A particle moves along straight line. Its motion in represented by the equation
+S = 16t + 4t2
+− 3t3
+where S is in metres and t, in seconds. Determine
+i. displacement, velocity and acceleration 2 seconds after start.
+ii. displacement and acceleration when velocity is zero and
+iii. displacement and acceleration when acceleration is zero.
+(7M)
+ b) A projectile is aimed at a target on the horizontal plane and falls 12m short when
+the angle of projection is 150
+ while it overshoots by 24m when the angle is 450
+.
+Find the angle of projection to hit the target.
+
+(7M)
+7. a) A homogeneous sphere of radius of a=100 mm and weight W=100 N can rotate
+freely about a diameter. If it starts from rest and gains, with constant angular
+acceleration, an angular speed n=180rpm, in 12 revolutions, find the acting
+moment.
+(7M)
+ b) Derive the impulse-Momentum equation of a body in motion
+
+
+
+
+
+
+
+
+6. a) A stone, dropped from a certain height, can reach the ground in 5s. It is stopped
+after 3 seconds of its fall and then allowed to fall again. Find the time taken by the
+stone to reach the ground for the remaining distance.
+(6M)
+ b) Two trains P and Q leave the same station on parallel lines. Train P starts at rest
+with uniform acceleration of 0.2 rad/s2
+ attains a speed of 10 m/s. Further the speed
+is kept constant. Train Q leaves 30 seconds later with uniform acceleration of 0.5
+m/s2
+from rest and attains a maximum speed of 20 m/s, when will train Q overtake
+train P.
+(8M)
+7. a) Determine the work done by an electric motor in winding up a uniform cable
+which hangs from a hoisting drum if its free length is 20m and weighs 800N. The
+drum is rotated by the motor.
+(6M)
+ b) A 20 kg block starting from rest slides up a 300
+ inclined plane under the action of
+a 175 N force directed along the inclined plane. The coefficient of kinetic friction
+between the block and the plane is 0.2. Determine the (i) speed of the block after it
+slides 4.5 m and (ii) the distance travelled by the block when its speed becomes
+4.5 m/s
+
+
+
+
+6. a) A bullet is fired from a height of 120 m a velocity of 360kmph at an angle of 30 degrees upwards.
+Neglecting air resistance find ( i) total time of flight;
+ (ii) Horizontal range of bullet.
+(7M)
+ b) Power supply is cut off to a power driven wheel when it was rotating at a speed of 900 rpm. It was
+observed to come to rest after making 360 revolutions. Determine its angular retardation and time
+it took to come to rest after power supply was cut off.
+(7M)
+7. a) A man weighing W Newton entered a lift which moves with an acceleration of a m/
+.Find the
+force exerted by the man on the floor of lift when i) lift is moving upwards ,ii) lift is moving
+downwards.
+(7M)
+ b) In a police investigation of tire marks, it was concluded that a car while in motion along a straight
+level road skidded for a distance of 60 meters after the brakes were applied. If the coefficient of
+friction between the tires and the pavement is estimated as 0.6, what was the probable speed of the
+car just before the brakes were applied? 
+
+
+
+6. a) The horizontal component of the velocity of a projectile is twice its initial vertical component. Find
+the range on the horizontal plane, if the projectile passes through a point 18 m horizontally and 3 m
+vertically about the point of projection.
+(7M)
+ b) A stone is thrown upwards from the top of a tower 70 m height with a velocity of 19.2 m/s.
+Determine its position and velocity when t = 6 seconds.
+(7M)
+R16 SET - 3
+2 of 3
+WWW.MANARESULTS.CO.IN
+ |''|'''||''||'''||||
+7. a)
+Code No: R161111
+Two blocks of weight W1 and W2 are
+connected by inextensible wire passing over a
+smooth pulley as in the figure. If W1 is greater
+than W2,find the tension in the string and the
+acceleration of the system.
+(7M)
+ b) Derive the work energy equation of translation
+
+
+6. a) A car is moving with a velocity of 72 kmph. After seeing a child on the road the brakes are applied
+and the vehicle is stopped in a distance of 15 m. If the retardation produced is proportional to
+distance from the point where brakes are applied, find the expression for retardation.
+(7M)
+ b) A flywheel which accelerates at uniform velocity is observed to have made 100 revolutions to
+increase the velocity from 120 rpm to 160 rpm. If the flywheel originally started from rest,
+determine the value of acceleration and time taken to increase the velocity from 120 rpm to 160
+rpm.
+(7M)
+7. a) Define work energy principle. Also derive the equation for work energy. (7M)
+ b) A 320 kN gun fires a 6 kN shell horizontally with a velocity of 300m/s. What is the recoil velocity
+of the gun? The recoil is overcome by applying an average force of 500 kN. What is the distance
+travelled by the gun and the time taken?
+
+
+
+6. a) A cage descends a mine shaft with an acceleration of 0.6m/
+.After the cage has travelled 30m, a
+stone is dropped from the top of the shaft. Determine the time taken by the stone to hit the cage and
+distance travelled by the cage before impact.
+(7M)
+ b) A projectile is aimed at a target on the horizontal plane and falls 12m short when the angle of
+projection is 15 deg while it overshoots by 24m when the angle is 45 deg. Find the angle of
+projection to hit the target.
+(7M)
+7. a) A pulley of weight 400 N has a radius of 0.6 m.
+A block of 600 N is suspended by a tight rope
+wound round the pulley, the other end being
+attached to the pulley as shown in figure.
+Determine the resulting acceleration of the
+weight and the tension in the rope.
+(7M)
+ b) Derive the impulse-Momentum equation of a body in motion. (7M)
+R16 SET - 1
+2 of 2
+
+
+6. a) An elevator is moving upwards with a constant speed of 10m/s. If a man standing
+inside the elevator drops a coin from a height of 2.45m, find the time taken by the
+coin to reach the floor of the elevator. (g=9.8m/s2
+).
+(6M)
+b) Two trains R and S start from rest simultaneously from stations A and B facing
+each other with accelerations 0.5 m/s2
+and 2/3 m/s2 reaching their maximum speeds
+of 90 kmph and 72 kmph respectively. If they cross each other midway between
+the stations, find the distance between the stations and the time taken by each
+other.
+(8M)
+7. a) A body of weight 2000N moves on a level horizontal rough road for a distance of
+200m. The resistance of the road is 10N per 1000N weight of the body. Find the
+work done by the resistance on the body.
+(6M)
+b) A bullet of 25 g mass is fired with a speed of 400 m/s. What is its kinetic energy?
+If the bullet can penetrate 20 cm in a block of wood, what is the average resistance
+of the wood? If the bullet were fired into a similar block of 10 cm thick wood,
+what would be the exit speed? 
+
+
+
+6. a) The driver of a car moving at a constant speed of 18 kmph realizes that if he
+moves at this speed, he will reach the office late by 10 seconds. Hence, he
+accelerates at a constant rate of 2m/s2
+ so that he reaches the office right in time.
+Determine the time taken to reach the office and the distance covered during time.
+(8M)
+ b) A particle undergoing central force motion has a tangential velocity of 20m/s
+while at a distance of 300m from the central point. Using the fact that the areal
+velocity of the particle must be constant, find its tangential velocity when it is
+400m away from the central point.
+(6M)
+7. a) A train of weight 18,365kg moves
+down at a uniform speed of 36kmph,
+along an incline of slope 1:83 and
+develops a power of 40kW as shown in
+figure. If the train is pulled up at the
+same speed, determine the power
+required to pull the train.
+(7M)
+ b) A 10g bullet is shot horizontally in a wood block of mass 1kg. The bullet gets
+embedded in the block and the block is displaced on a rough horizontal surface of
+a table with µ=0.2 through 1m. What was the velocity of bullet? 
+
+
+6. a) The driver of a car moving at a constant speed of 18 kmph realizes that if he
+moves at this speed, he will reach the office late by 10 seconds. Hence, he
+accelerates at a constant rate of 2m/s2
+ so that he reaches the office right in time.
+Determine the time taken to reach the office and the distance covered during time.
+(8M)
+ b) A particle undergoing central force motion has a tangential velocity of 20m/s
+while at a distance of 300m from the central point. Using the fact that the areal
+velocity of the particle must be constant, find its tangential velocity when it is
+400m away from the central point.
+(6M)
+7. a) A train of weight 18,365kg moves
+down at a uniform speed of 36kmph,
+along an incline of slope 1:83 and
+develops a power of 40kW as shown in
+figure. If the train is pulled up at the
+same speed, determine the power
+required to pull the train.
+(7M)
+ b) A 10g bullet is shot horizontally in a wood block of mass 1kg. The bullet gets
+embedded in the block and the block is displaced on a rough horizontal surface of
+a table with µ=0.2 through 1m. What was the velocity of bullet?
+
+6. a) The driver of a car moving at a constant speed of 18 kmph realizes that if he
+moves at this speed, he will reach the office late by 10 seconds. Hence, he
+accelerates at a constant rate of 2m/s2
+ so that he reaches the office right in time.
+Determine the time taken to reach the office and the distance covered during time.
+(8M)
+ b) A particle undergoing central force motion has a tangential velocity of 20m/s
+while at a distance of 300m from the central point. Using the fact that the areal
+velocity of the particle must be constant, find its tangential velocity when it is
+400m away from the central point.
+(6M)
+7. a) A train of weight 18,365kg moves
+down at a uniform speed of 36kmph,
+along an incline of slope 1:83 and
+develops a power of 40kW as shown in
+figure. If the train is pulled up at the
+same speed, determine the power
+required to pull the train.
+(7M)
+ b) A 10g bullet is shot horizontally in a wood block of mass 1kg. The bullet gets
+embedded in the block and the block is displaced on a rough horizontal surface of
+a table with µ=0.2 through 1m. What was the velocity of bullet?
+
+6. a) A solid cylinder weighing 1300N is
+acted upon by a force P horizontally as
+shown in figure. Determine the
+maximum value of P for which there
+will be rolling without slipping (given
+µ=0.2).
+(8M)
+ b) Determine the force exerted by the floor of the lift on a passenger of 75kg mass,
+when the lift is (i) accelerating upwards at 1m/s2
+ and (ii) accelerating downwards
+at 0.9m/s2
+.
+(6M)
+7. a) A gun coils a bullet 15g and shot a wooden block of mass 2.5kg horizontally. The
+bullet gets embedded in the block and displaces it through a distance 1.5m on a
+rough horizontal surface with Co-efficient of friction 0.3. What will be the
+velocity of the bullet.
+(7M)
+ b) A train of 1500kN weight develops a power of 35kW while moving down a slope
+of 1 in 150 at a uniform speed of 18kmph. What power is required if the train is to
+go up the slope with the same speed? 
+
+
+6. a) The driver of a car moving at a constant speed of 18 kmph realizes that if he
+moves at this speed, he will reach the office late by 10 seconds. Hence, he
+accelerates at a constant rate of 2m/s2
+ so that he reaches the office right in time.
+Determine the time taken to reach the office and the distance covered during time.
+(8M)
+ b) A particle undergoing central force motion has a tangential velocity of 20m/s
+while at a distance of 300m from the central point. Using the fact that the areal
+velocity of the particle must be constant, find its tangential velocity when it is
+400m away from the central point.
+(6M)
+7. a) A train of weight 18,365kg moves
+down at a uniform speed of 36kmph,
+along an incline of slope 1:83 and
+develops a power of 40kW as shown in
+figure. If the train is pulled up at the
+same speed, determine the power
+required to pull the train.
+(7M)
+ b) A 10g bullet is shot horizontally in a wood block of mass 1kg. The bullet gets
+embedded in the block and the block is displaced on a rough horizontal surface of
+a table with µ=0.2 through 1m. What was the velocity of bullet? 
+
+
+6. a) A solid cylinder weighing 1300N is
+acted upon by a force P horizontally as
+shown in figure. Determine the
+maximum value of P for which there
+will be rolling without slipping (given
+µ=0.2).
+(8M)
+ b) Determine the force exerted by the floor of the lift on a passenger of 75kg mass,
+when the lift is (i) accelerating upwards at 1m/s2
+ and (ii) accelerating downwards
+at 0.9m/s2
+.
+(6M)
+7. a) A gun coils a bullet 15g and shot a wooden block of mass 2.5kg horizontally. The
+bullet gets embedded in the block and displaces it through a distance 1.5m on a
+rough horizontal surface with Co-efficient of friction 0.3. What will be the
+velocity of the bullet.
+(7M)
+ b) A train of 1500kN weight develops a power of 35kW while moving down a slope
+of 1 in 150 at a uniform speed of 18kmph. What power is required if the train is to
+go up the slope with the same speed? 
+
+
+6. a) Two stones A and B are projected from the same point at inclinations of 45 and
+30 respectively to the horizontal. Find the ratio of the velocities of projection of
+A and B if the maximum height reached by them is the same.
+(7M)
+ b) Water drips from a tap fitted to a barrel at the rate of four drops per second. Find
+the vertical separation between two consecutive drops after the lower drop has
+attained a velocity of 3m/s
+(7M)
+7. a) A gun of mass 30 tonnes fires a 456Kg projectile with a velocity of 305 m/s. With
+what initial velocity will the gun recoil? If the recoil is overcome by an average
+force of 600KN, how far will the gun travel? How long will it take?
+(7M)
+ b) Derive work energy equation of translation. 
+
+
+
+
+
+
+
+
+6. a) A block of mass 30 kg is resting on a horizontal table 1.5 m from its edge. The
+block A is attached to string whose other end is carrying a body B of mass 3 kg. If
+the coefficient of friction between the block A and the table 0.06 find the
+acceleration of the system and the time required to fall over the edge.
+(7M)
+ b) A car starts from rest on a curved road of radius 250 m and attains a speed of 18
+kmph at the end of 60 sec while travelling with uniform acceleration. Find the
+tangential and normal accelerations of the car 30 sec and 45 sec after it started.
+(7M)
+7. a) A block of mass m is dropped on to a spring of stiffness k from a height h. Find
+the maximum deflection of the spring. Assume m = 6 kg, k = 550 N/m, h = 10 cm.
+(7M)
+ b) A bullet of mass 25 kg is fired with a velocity of 500 m/s into a wooden block
+resting against a rigid vertical wall. If the bullet is brought to rest in 0.5 ms,
+determine the average impulsive force exerted by the bullet on the block. Also
+calculate the impulsive force exerted if the mass of bullet is increased to 30 g. 
+
+
+
+
+6. a) A body A is projected vertically upwards from the top of a tower with a velocity
+of 40 m/s, the tower being 180m high. After t sec, another body B is allowed to
+fall from the same point. Both the bodies reach the ground simultaneously.
+Calculate t and the velocities of A and B on reaching the ground.
+(7M)
+b) A body moving with uniform acceleration observed to travel 33m in 8th second
+and 53m in 13 second of its travel. Calculate the velocity at start and uniform
+acceleration.
+(7M)
+7. a) A 320 KN gain fires a 6 KN shell horizontally with a velocity of 300m/s. What is
+the recoil velocity of the gun? The recoil is overcome by applying an average fore
+of 500 KN. What is the distance travelled by the gun and the time taken?
+(7M)
+b) Define work energy principle. Also derive the equation for work energy. (7M)
+
+
+
+
+
+
+
+
+
+

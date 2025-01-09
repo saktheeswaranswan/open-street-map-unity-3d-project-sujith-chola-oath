@@ -1,0 +1,663 @@
+let outerPolygon = [];
+let innerPolygons = [];
+let dMin = 50; // Minimum allowed distance between polygons
+let dMax = 100; // Maximum allowed distance between polygons
+let distanceFromOuter = 30; // Minimum distance from outer polygon boundary to inner polygons
+let violationCount = 0;
+
+function setup() {
+  createCanvas(800, 800);
+  angleMode(DEGREES);
+
+  // Define outer polygon (hexagon)
+  let nOuter = 6;
+  let radiusOuter = 300;
+  let cx = width / 2, cy = height / 2;
+
+  // Generate the outer polygon vertices
+  for (let i = 0; i < nOuter; i++) {
+    let angle = i * (360 / nOuter);
+    let x = cx + radiusOuter * cos(angle);
+    let y = cy + radiusOuter * sin(angle);
+    outerPolygon.push({ x, y });
+  }
+
+  // Define inner polygons for body parts like head, torso, limbs, etc.
+  let bodyParts = ['Head', 'Torso', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg', 'Left Hand', 'Right Hand', 'Left Foot', 'Right Foot'];
+  let bodyPartPositions = [
+    { bodyPart: 'Head', x: cx, y: cy - 120, radius: 40 }, // Head
+    { bodyPart: 'Torso', x: cx, y: cy, radius: 60 }, // Torso
+    { bodyPart: 'Left Arm', x: cx - 100, y: cy - 40, radius: 30 }, // Left Arm
+    { bodyPart: 'Right Arm', x: cx + 100, y: cy - 40, radius: 30 }, // Right Arm
+    { bodyPart: 'Left Leg', x: cx - 50, y: cy + 100, radius: 35 }, // Left Leg
+    { bodyPart: 'Right Leg', x: cx + 50, y: cy + 100, radius: 35 }, // Right Leg
+    { bodyPart: 'Left Hand', x: cx - 140, y: cy - 70, radius: 20 }, // Left Hand
+    { bodyPart: 'Right Hand', x: cx + 140, y: cy - 70, radius: 20 }, // Right Hand
+    { bodyPart: 'Left Foot', x: cx - 50, y: cy + 200, radius: 20 }, // Left Foot
+    { bodyPart: 'Right Foot', x: cx + 50, y: cy + 200, radius: 20 }, // Right Foot
+  ];
+
+  // Place the body parts inside the hexagon
+  bodyPartPositions.forEach(p => {
+    // Check distance from the outer polygon boundary
+    let violation = !isValidDistanceFromOuter(p.x, p.y, distanceFromOuter);
+    innerPolygons.push({ ...p, violation });
+  });
+
+  // Export the coordinates and violations after initialization
+  exportPolygonData();
+}
+
+function draw() {
+  background(240);
+  strokeWeight(1);
+
+  // Draw outer polygon (hexagon)
+  fill(200, 200, 255, 100);
+  beginShape();
+  for (let v of outerPolygon) {
+    vertex(v.x, v.y);
+  }
+  endShape(CLOSE);
+
+  // Draw body parts (circles)
+  for (let p of innerPolygons) {
+    if (p.violation) {
+      fill(255, 0, 0, 150); // Red for violated polygons
+    } else {
+      fill(0, 255, 0, 150); // Green for valid polygons
+    }
+    ellipse(p.x, p.y, p.radius * 2);
+    textSize(12);
+    fill(0);
+    textAlign(CENTER, CENTER);
+    text(p.bodyPart, p.x, p.y);
+  }
+
+  // Visualize constraints and violations
+  checkConstraints();
+}
+
+// Function to check if a point is within a certain distance from the outer polygon
+function isValidDistanceFromOuter(px, py, minDist) {
+  let minDistToEdge = Infinity;
+
+  // Check distance from the point to each edge of the outer polygon
+  for (let i = 0; i < outerPolygon.length; i++) {
+    let j = (i + 1) % outerPolygon.length;
+    let distToEdge = pointLineDistance(px, py, outerPolygon[i].x, outerPolygon[i].y, outerPolygon[j].x, outerPolygon[j].y);
+    minDistToEdge = min(minDistToEdge, distToEdge);
+  }
+
+  return minDistToEdge >= minDist;
+}
+
+// Function to compute the distance from a point to a line segment
+function pointLineDistance(px, py, x1, y1, x2, y2) {
+  let A = px - x1, B = py - y1;
+  let C = x2 - x1, D = y2 - y1;
+
+  let dot = A * C + B * D;
+  let lenSq = C * C + D * D;
+  let param = lenSq != 0 ? dot / lenSq : -1;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  return dist(px, py, xx, yy);
+}
+
+function checkConstraints() {
+  strokeWeight(2);
+
+  // Check distance between neighboring body parts
+  for (let i = 0; i < innerPolygons.length; i++) {
+    for (let j = i + 1; j < innerPolygons.length; j++) {
+      let d = dist(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+
+      // Draw line: green for valid, red for violation
+      if (d >= dMin && d <= dMax) {
+        stroke(0, 255, 0); // Green
+      } else {
+        stroke(255, 0, 0); // Red
+      }
+      line(innerPolygons[i].x, innerPolygons[i].y, innerPolygons[j].x, innerPolygons[j].y);
+    }
+  }
+}
+
+// Export data with coordinates and violation status
+function exportPolygonData() {
+  let polygonData = [];
+
+  for (let p of innerPolygons) {
+    polygonData.push({
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      violation: p.violation
+    });
+  }
+
+  // Print to console
+  console.log("Polygon Data:", polygonData);
+  // You can save this data to a file if needed or use it in further processing
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let currentAction = "";
+let actions = ["walking", "running", "dancing", "fighting", "eating", "sitting", "jumping", "reading", "laughing", "working"];
+let characterParts = [];
+
+function setup() {
+  createCanvas(800, 800);
+  // Initialize character body parts (head, arms, legs)
+  initializeCharacter();
+  // Start randomizing movements
+  setInterval(randomizeAction, 2000); // Change action every 2 seconds
+}
+
+function draw() {
+  background(240);
+  
+  // Update and draw current action
+  performAction(currentAction);
+  
+  // Display the current action being performed
+  fill(0);
+  textSize(16);
+  textAlign(CENTER);
+  text("Current Action: " + currentAction, width / 2, 30);
+}
+
+// Initialize character body parts
+function initializeCharacter() {
+  // Body parts would be objects like this (simplified version)
+  characterParts = {
+    head: { x: width / 2, y: 100, size: 50 },
+    torso: { x: width / 2, y: 200, width: 60, height: 100 },
+    leftArm: { x: width / 2 - 40, y: 200, size: 30 },
+    rightArm: { x: width / 2 + 40, y: 200, size: 30 },
+    leftLeg: { x: width / 2 - 20, y: 300, size: 40 },
+    rightLeg: { x: width / 2 + 20, y: 300, size: 40 },
+  };
+}
+
+// Perform the selected action
+function performAction(action) {
+  switch(action) {
+    case "walking":
+      walk();
+      break;
+    case "running":
+      run();
+      break;
+    case "dancing":
+      dance();
+      break;
+    case "fighting":
+      fight();
+      break;
+    case "eating":
+      eat();
+      break;
+    case "sitting":
+      sit();
+      break;
+    case "jumping":
+      jump();
+      break;
+    case "reading":
+      read();
+      break;
+    case "laughing":
+      laugh();
+      break;
+    case "working":
+      work();
+      break;
+    default:
+      break;
+  }
+}
+
+// Walking action (slow and steady movement)
+function walk() {
+  // Moving legs and arms alternatively for walking motion
+  let leftLegMovement = sin(frameCount * 0.1) * 10;
+  let rightLegMovement = -sin(frameCount * 0.1) * 10;
+  let leftArmMovement = -sin(frameCount * 0.1) * 5;
+  let rightArmMovement = sin(frameCount * 0.1) * 5;
+  
+  // Draw legs and arms for walking
+  ellipse(characterParts.leftLeg.x, characterParts.leftLeg.y + leftLegMovement, characterParts.leftLeg.size, characterParts.leftLeg.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  // Draw torso and head (static for simplicity in this case)
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Running action (faster movement)
+function run() {
+  let leftLegMovement = sin(frameCount * 0.2) * 15;
+  let rightLegMovement = -sin(frameCount * 0.2) * 15;
+  let leftArmMovement = -sin(frameCount * 0.2) * 8;
+  let rightArmMovement = sin(frameCount * 0.2) * 8;
+  
+  ellipse(characterParts.leftLeg.x, characterParts.leftLeg.y + leftLegMovement, characterParts.leftLeg.size, characterParts.leftLeg.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Dancing action (rhythmic arm/leg movement)
+function dance() {
+  let leftArmMovement = sin(frameCount * 0.3) * 30;
+  let rightArmMovement = -sin(frameCount * 0.3) * 30;
+  
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Fighting action (punches, kicks)
+function fight() {
+  // Simulate quick punches and kicks
+  let leftArmMovement = sin(frameCount * 0.5) * 30;
+  let rightLegMovement = -sin(frameCount * 0.5) * 25;
+  
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Randomly choose the next action
+function randomizeAction() {
+  currentAction = random(actions);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let currentAction = "";
+let actions = ["walking", "running", "dancing", "fighting", "eating", "sitting", "jumping", "reading", "laughing", "working"];
+let characterParts = [];
+
+function setup() {
+  createCanvas(800, 800);
+  // Initialize character body parts (head, arms, legs)
+  initializeCharacter();
+  // Start randomizing movements
+  setInterval(randomizeAction, 2000); // Change action every 2 seconds
+}
+
+function draw() {
+  background(240);
+  
+  // Update and draw current action
+  performAction(currentAction);
+  
+  // Display the current action being performed
+  fill(0);
+  textSize(16);
+  textAlign(CENTER);
+  text("Current Action: " + currentAction, width / 2, 30);
+}
+
+// Initialize character body parts
+function initializeCharacter() {
+  // Body parts would be objects like this (simplified version)
+  characterParts = {
+    head: { x: width / 2, y: 100, size: 50 },
+    torso: { x: width / 2, y: 200, width: 60, height: 100 },
+    leftArm: { x: width / 2 - 40, y: 200, size: 30 },
+    rightArm: { x: width / 2 + 40, y: 200, size: 30 },
+    leftLeg: { x: width / 2 - 20, y: 300, size: 40 },
+    rightLeg: { x: width / 2 + 20, y: 300, size: 40 },
+  };
+}
+
+// Perform the selected action
+function performAction(action) {
+  switch(action) {
+    case "walking":
+      walk();
+      break;
+    case "running":
+      run();
+      break;
+    case "dancing":
+      dance();
+      break;
+    case "fighting":
+      fight();
+      break;
+    case "eating":
+      eat();
+      break;
+    case "sitting":
+      sit();
+      break;
+    case "jumping":
+      jump();
+      break;
+    case "reading":
+      read();
+      break;
+    case "laughing":
+      laugh();
+      break;
+    case "working":
+      work();
+      break;
+    default:
+      break;
+  }
+}
+
+// Walking action (slow and steady movement)
+function walk() {
+  // Moving legs and arms alternatively for walking motion
+  let leftLegMovement = sin(frameCount * 0.1) * 10;
+  let rightLegMovement = -sin(frameCount * 0.1) * 10;
+  let leftArmMovement = -sin(frameCount * 0.1) * 5;
+  let rightArmMovement = sin(frameCount * 0.1) * 5;
+  
+  // Draw legs and arms for walking
+  ellipse(characterParts.leftLeg.x, characterParts.leftLeg.y + leftLegMovement, characterParts.leftLeg.size, characterParts.leftLeg.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  // Draw torso and head (static for simplicity in this case)
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Running action (faster movement)
+function run() {
+  let leftLegMovement = sin(frameCount * 0.2) * 15;
+  let rightLegMovement = -sin(frameCount * 0.2) * 15;
+  let leftArmMovement = -sin(frameCount * 0.2) * 8;
+  let rightArmMovement = sin(frameCount * 0.2) * 8;
+  
+  ellipse(characterParts.leftLeg.x, characterParts.leftLeg.y + leftLegMovement, characterParts.leftLeg.size, characterParts.leftLeg.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Dancing action (rhythmic arm/leg movement)
+function dance() {
+  let leftArmMovement = sin(frameCount * 0.3) * 30;
+  let rightArmMovement = -sin(frameCount * 0.3) * 30;
+  
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Fighting action (punches, kicks)
+function fight() {
+  // Simulate quick punches and kicks
+  let leftArmMovement = sin(frameCount * 0.5) * 30;
+  let rightLegMovement = -sin(frameCount * 0.5) * 25;
+  
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Randomly choose the next action
+function randomizeAction() {
+  currentAction = random(actions);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let currentAction = "";
+let actions = ["walking", "running", "dancing", "fighting", "eating", "sitting", "jumping", "reading", "laughing", "working"];
+let characterParts = [];
+
+function setup() {
+  createCanvas(800, 800);
+  // Initialize character body parts (head, arms, legs)
+  initializeCharacter();
+  // Start randomizing movements
+  setInterval(randomizeAction, 2000); // Change action every 2 seconds
+}
+
+function draw() {
+  background(240);
+  
+  // Update and draw current action
+  performAction(currentAction);
+  
+  // Display the current action being performed
+  fill(0);
+  textSize(16);
+  textAlign(CENTER);
+  text("Current Action: " + currentAction, width / 2, 30);
+}
+
+// Initialize character body parts
+function initializeCharacter() {
+  // Body parts would be objects like this (simplified version)
+  characterParts = {
+    head: { x: width / 2, y: 100, size: 50 },
+    torso: { x: width / 2, y: 200, width: 60, height: 100 },
+    leftArm: { x: width / 2 - 40, y: 200, size: 30 },
+    rightArm: { x: width / 2 + 40, y: 200, size: 30 },
+    leftLeg: { x: width / 2 - 20, y: 300, size: 40 },
+    rightLeg: { x: width / 2 + 20, y: 300, size: 40 },
+  };
+}
+
+// Perform the selected action
+function performAction(action) {
+  switch(action) {
+    case "walking":
+      walk();
+      break;
+    case "running":
+      run();
+      break;
+    case "dancing":
+      dance();
+      break;
+    case "fighting":
+      fight();
+      break;
+    case "eating":
+      eat();
+      break;
+    case "sitting":
+      sit();
+      break;
+    case "jumping":
+      jump();
+      break;
+    case "reading":
+      read();
+      break;
+    case "laughing":
+      laugh();
+      break;
+    case "working":
+      work();
+      break;
+    default:
+      break;
+  }
+}
+
+// Walking action (slow and steady movement)
+function walk() {
+  // Moving legs and arms alternatively for walking motion
+  let leftLegMovement = sin(frameCount * 0.1) * 10;
+  let rightLegMovement = -sin(frameCount * 0.1) * 10;
+  let leftArmMovement = -sin(frameCount * 0.1) * 5;
+  let rightArmMovement = sin(frameCount * 0.1) * 5;
+  
+  // Draw legs and arms for walking
+  ellipse(characterParts.leftLeg.x, characterParts.leftLeg.y + leftLegMovement, characterParts.leftLeg.size, characterParts.leftLeg.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  // Draw torso and head (static for simplicity in this case)
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Running action (faster movement)
+function run() {
+  let leftLegMovement = sin(frameCount * 0.2) * 15;
+  let rightLegMovement = -sin(frameCount * 0.2) * 15;
+  let leftArmMovement = -sin(frameCount * 0.2) * 8;
+  let rightArmMovement = sin(frameCount * 0.2) * 8;
+  
+  ellipse(characterParts.leftLeg.x, characterParts.leftLeg.y + leftLegMovement, characterParts.leftLeg.size, characterParts.leftLeg.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Dancing action (rhythmic arm/leg movement)
+function dance() {
+  let leftArmMovement = sin(frameCount * 0.3) * 30;
+  let rightArmMovement = -sin(frameCount * 0.3) * 30;
+  
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightArm.x, characterParts.rightArm.y + rightArmMovement, characterParts.rightArm.size, characterParts.rightArm.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Fighting action (punches, kicks)
+function fight() {
+  // Simulate quick punches and kicks
+  let leftArmMovement = sin(frameCount * 0.5) * 30;
+  let rightLegMovement = -sin(frameCount * 0.5) * 25;
+  
+  ellipse(characterParts.leftArm.x, characterParts.leftArm.y + leftArmMovement, characterParts.leftArm.size, characterParts.leftArm.size);
+  ellipse(characterParts.rightLeg.x, characterParts.rightLeg.y + rightLegMovement, characterParts.rightLeg.size, characterParts.rightLeg.size);
+  
+  rect(characterParts.torso.x - characterParts.torso.width / 2, characterParts.torso.y, characterParts.torso.width, characterParts.torso.height);
+  ellipse(characterParts.head.x, characterParts.head.y, characterParts.head.size, characterParts.head.size);
+}
+
+// Randomly choose the next action
+function randomizeAction() {
+  currentAction = random(actions);
+}
